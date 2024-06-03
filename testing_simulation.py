@@ -51,7 +51,10 @@ class Simulation:
         old_action = -1 # dummy init
         last_green_phase = -1
         cur_green_phase = 0
+        action_0 = 0
+        action_1 = 0
         while self._step < self._max_steps:
+            penalty = 0
             # Flag represents the phase have been extended
             flag = 0
             # get current state of the intersection
@@ -60,11 +63,16 @@ class Simulation:
             # calculate reward of previous action: (change in cumulative waiting time between actions)
             # waiting time = seconds waited by a car since the spawn in the environment, cumulated for every car in incoming lanes
             current_total_wait = self._get_waiting_times()
-            reward = old_total_wait - current_total_wait
+            if old_action == 1:
+                penalty = 10
+            reward = old_total_wait - current_total_wait - penalty
 
             # choose the light phase to activate, based on the current state of the intersection
             action = self._choose_action(current_state)
-
+            if action == 0:
+                action_0 += 1
+            else:
+                action_1 += 1
             # if the chosen phase is different from the last phase, activate the yellow phase
             if self._step != 0: 
                 if action == 0: # action 0: extend the last phase
@@ -93,7 +101,8 @@ class Simulation:
         #print("Total reward:", np.sum(self._reward_episode))
         traci.close()
         simulation_time = round(timeit.default_timer() - start_time, 1)
-
+        print("action_0", action_0)
+        print("action_1", action_1)
         return simulation_time
 
 
@@ -197,19 +206,46 @@ class Simulation:
                     Route_S_N[0] += 1
                     Route_S_N[1] += 5
                     Route_S_N[2] += speed
-
+            max_speed = 17.4
+            # Set range for average speed
             if Route_W_E[0] != 0:
                 Route_W_E[2] /= Route_W_E[0]
+                Route_W_E[2] /= max_speed
+                Route_W_E[2] *= 10
+                Route_W_E[2] = round(Route_W_E[2] ,0)
             if Route_N_S[0] != 0:
                 Route_N_S[2] /= Route_N_S[0]
+                Route_N_S[2] /= max_speed
+                Route_N_S[2] *= 10
+                Route_N_S[2] = round(Route_N_S[2] ,0)
             if Route_E_W[0] != 0:
                 Route_E_W[2] /= Route_E_W[0]
+                Route_E_W[2] /= max_speed
+                Route_E_W[2] *= 10
+                Route_E_W[2] = round(Route_E_W[2] ,0)
             if Route_S_N[0] != 0:
                 Route_S_N[2] /= Route_S_N[0]
-            Route_W_E[1] /= 50
-            Route_N_S[1] /= 50
-            Route_E_W[1] /= 50
-            Route_S_N[1] /= 50
+                Route_S_N[2] /= max_speed
+                Route_S_N[2] *= 10
+                Route_S_N[2] = round(Route_S_N[2] ,0)
+            # Set range for occupied area
+            Route_W_E[1] /= 6
+            Route_W_E[1] = round(Route_W_E[1], 0)
+            Route_N_S[1] /= 6
+            Route_N_S[1] = round(Route_N_S[1], 0)
+            Route_E_W[1] /= 6
+            Route_E_W[1] = round(Route_E_W[1], 0)
+            Route_S_N[1] /= 6
+            Route_S_N[1] = round(Route_S_N[1], 0)
+            # Set range for number vehicle
+            Route_W_E[0] /= 1.2
+            Route_W_E[0] = round(Route_W_E[0], 0)
+            Route_N_S[0] /= 1.2
+            Route_N_S[0] = round(Route_N_S[0], 0)
+            Route_E_W[0] /= 1.2
+            Route_E_W[0] = round(Route_E_W[0], 0)
+            Route_S_N[0] /= 1.2
+            Route_S_N[0] = round(Route_S_N[0], 0)
         state = np.array([Route_W_E, Route_N_S, Route_E_W, Route_S_N])
         state = np.reshape(state, [12, ])
         # print(state)

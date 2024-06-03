@@ -5,6 +5,7 @@ import numpy as np
 import sys
 
 from tensorflow import keras
+print(tf.__version__)
 from tensorflow.keras import layers
 from tensorflow.keras import losses
 from tensorflow.keras.optimizers import Adam
